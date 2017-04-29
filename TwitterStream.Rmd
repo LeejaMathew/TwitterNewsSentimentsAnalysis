@@ -1,0 +1,126 @@
+---
+title: "TwitterStream"
+author: "Jean-Carlos Paredes"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r eval=FALSE}
+#The pacman package is an R package management tool that combines the functionality of base library related functions into intuitively named functions.
+install.packages("pacman")
+ #Provides functions to allow one to compose general HTTP requests and provides convenient functions to fetch URI
+#Provides an interface to the OAuth 1.0 specification allowing users to authenticate via OAuth to the server of their choice.
+install.packages("RCurl", "ROAuth")
+#This is a package that allows conversion to and from data in Javascript object notation (JSON) format. 
+#Useful tools for working with HTTP organised by HTTP verbs (GET(), POST(), etc).
+#Access to Twitter Streaming API via R
+install.packages("RJSONIO")
+install.packages("httr","streamR")
+install.packages("tm","Rstem")
+#Load Packages Using Pacman
+pacman::p_load(twitteR,plyr, ggplot2, RColorBrewer, httpuv, RCurl, base64enc,devtools,streamR,RJSONIO,stringr, ggmap, ROAuth)
+library(wordcloud)
+library(RColorBrewer)
+library(sentiment)
+#Sentiment Analysis
+install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
+install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+
+#Twitter Access 
+requestURL <- "https://api.twitter.com/oauth/request_token" 
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+consumerKey <- "VVyAQ0GEN3h7N492wmgN49yL5" #CHANGE THIS
+consumerSecret <- "8EaVm0hGvPhOFwuHQRlk5Dc4mPgcJTCinuDOD2MIkYRB73dJdb" #CHANGE THIS
+ 
+#Use OAuthFactory for access 
+my_oauth <- OAuthFactory$new(consumerKey = consumerKey,
+                             consumerSecret = consumerSecret,
+                             requestURL = requestURL,
+                             accessURL = accessURL,
+                             authURL = authURL)
+
+save(my_oauth, file = "my_oauth.Rdata")
+
+ 
+### START HERE!!!  ###
+load("/Users/jc/Desktop/my_oauth.Rdata")
+ 
+#Load Positive/Negative Words
+posWords = scan('/Users/jc/Projects/opinion-lexicon-English/positive-words.txt', what='character', comment.char=';')
+
+negWords = scan('/Users/jc/Projects/opinion-lexicon-English/negative-words.txt', what='character', comment.char=';')
+
+
+#Performs an OAuth handshake using the information provided.
+my_oauth$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+
+#Find GeoCode by typing city, state
+#geocode()
+
+#Requires Logitute,Latitude (1.South, 2.North)
+nyLoc <- "-74,40.47,-73.7,40.9"
+miaLoc <- "-80.3,25.7,-80.1,25.8"
+kyLoc <- "-85.9,37.9,-85.4,38.3"
+utahLoc <-  "-112.1,40.7,-111.7,40.8"
+
+#TOPICS <- These are the keyworks to search
+oreilly <- ("Fox, fownews, oreilly, oreillyfactor")
+starbucks <- ("UnicornFrappuccino , starbucks , unicornfrap")
+samsung <- ("s8 samsung, galaxy8 samsung, galaxys8 samsung, galaxys8,samsunggalaxy 8, samsunggalaxy8")
+france <- ("french election , le pen, emmanuel macron" )
+
+
+
+##COMMENCE DATASTREAMING
+dayIs(29)
+#CHANGE THIS <- getData(InterstName of File,X,This is the Topics to Search)
+dayIs <- function (x) { 
+
+ getData("oreilly",x, oreilly)   
+ getData("starbucks",x, starbucks)
+  getData("samsung", x, samsung)
+  getData("france", x, france)
+
+}
+
+#Streaming Data Function <- streamData(x,y,z is the from the function above) <- Change Nyc to indicate location on the filename
+getData <- function(x,y,z){
+  
+  streamData(z,nyLoc,paste(x,"Nyc",y,".json",sep=""))
+  streamData(z,miaLoc,paste(x,"Mia",y,".json",sep=""))
+  streamData(z,kyLoc,paste(x,"Ky",y,".json",sep=""))
+  streamData(z,utahLoc,paste(x,"Utah",y,".json",sep=""))
+
+}
+
+
+
+streamData <- function(x, y, w){
+  filterStream(file.name = w, # Save tweets in a json file
+             track = c(x), # Collect tweets 
+             language = "en",
+             location = c(y), # latitude/longitude
+             timeout = 300, # Keep connection 300 = 5 Minutes
+             oauth = my_oauth) # Use my_oauth file as the OAuth credentials
+
+  
+}
+
+emotionRes <- readRDS("/Users/jc/Downloads/EmotionResults.rds")
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+

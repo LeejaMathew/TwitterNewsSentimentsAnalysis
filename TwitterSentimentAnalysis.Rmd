@@ -83,12 +83,132 @@ scale_fill_brewer(palette='Dark2') +
 labs(x='emotion categories', y='number of tweets') +
 ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
 theme(plot.title = element_text(size=12, face='bold'))
+```
 
+```{r}
+#SENTIMENT ANALYSIS IN FUNCTIONS 
+# function to clean the data 
+gettxt <- function(file){
+  # parse the json file and save to a data frame called tweets.df. Simplify = FALSE ensures that we include      lat/lon information in that data frame.
+  file.df <- parseTweets(file, simplify = FALSE)
+  tweet_txt <-subset(file.df, select = "text")
+  tweet_txt <-file.df$text
+  # remove retweet entities
+  tweet_txt = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", tweet_txt)
+  # remove at people
+  tweet_txt = gsub("@\\w+", "", tweet_txt)
+  # remove punctuation
+  tweet_txt = gsub("[[:punct:]]", "", tweet_txt)
+  # remove numbers
+  tweet_txt = gsub("[[:digit:]]", "", tweet_txt)
+  # remove html links
+  tweet_txt = gsub("http\\w+", "", tweet_txt)
+  # remove unnecessary spaces
+  tweet_txt = gsub("[ \t]{2,}", "", tweet_txt)
+  tweet_txt = gsub("^\\s+|\\s+$", "", tweet_txt)
+  tweet_txt=gsub("[^0-9a-zA-Z ,./?><:;’~`!@#&*’]","", tweet_txt)
+  return(tweet_txt)
+}
+```
 
+```{r}
+# function to perform Sentiment Analysis
+sentimentAnaysis <- function(tweet_txt){
+  # classify emotion
+  class_emo = classify_emotion(tweet_txt, algorithm='bayes', prior=1.0)
+  # get emotion best fit
+  emotion <- class_emo[,7]
+  # substitute NA's by 'unknown'
+  emotion[is.na(emotion)] = 'unknown'
+  # classify polarity
+  class_pol = classify_polarity(tweet_txt, algorithm='bayes')
+  # get polarity best fit
+  polarity = class_pol[,4]
+  # Create data frame with the results and obtain some general statistics
+  # data frame with results
+  sent_df = data.frame(text=tweet_txt, emotion=emotion,
+  polarity=polarity, stringsAsFactors=FALSE)
+  # sort data frame
+  sent_df = within(sent_df,
+  emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
+  #emotiondf <- data.frame(emotion)
+  return(emotion)
+}
+```
 
+```{r}
+#function that calculates the number of different emotions and creates a data frame
+nEmo <- function(emotionList){
+  for(i in 1:length(emotionList)){
+    joy <- which(emotionList[[i]] == "joy")
+    nJoy <- length(joy)
+    anger <- which(emotionList[[i]] == "anger")
+    nAnger <- length(anger)
+    sadness <- which(emotionList[[i]] == "sadness")
+    nSadness <- length(sadness)
+    disgust <- which(emotionList[[i]] == "disgust")
+    nDisgust <- length(disgust)
+    fear <- which(emotionList[[i]] == "fear")
+    nFear <- length(fear)
+    surprise <- which(emotionList[[i]] == "surprise")
+    nSurprise <- length(surprise)
+    length(emotionList[[i]])
+    unknown <- which(emotionList[[i]] == "unknown")
+    nUknown <- length(unknown)
+    total <- (length(emotionList[[i]]) - nUknown)
+    if(i == 1){
+      df <- data.frame(total = total, joy = nJoy, anger = nAnger, sadness = nSadness, fear = nFear, surprise = nSurprise)
+    }else{
+          nEmotions <- c(nJoy, nAnger, nSadness, nDisgust, nFear, nSurprise, total)
+          df <- rbind(df, nEmotions)
+    }
+  }
+  return(df)
+}
+```
+
+```{r}
+#function that adds the city and state of the location to the data frame
+cities <- vector("character", length(files))
+namesCol <- function(files){
+  for(i in 1:length(files)){
+    nString <- substring(files[[i]], 1, 2)
+    if(nString == "CA"){
+      cities[[i]] <- "california,san francisco"
+      cat(cities[[i]])
+    }else if (nString == "OH"){
+       cities[[i]] <- "ohio,cincinnati"
+    }else if (nString == "ID"){
+       cities[[i]] <- "idaho,boise"
+    }else{
+       cities[[i]] <- "illinois,chicago"
+    }
+  }
+  return(cities)
+}
 
 ```
 
+```{r}
+#Main - Testing functions
+files <- c("CA042017AM.json", "OH042017AM.json", "ID042017AM.json", "IL042017AM.json")
+
+txtList <- list() 
+for(i in 1:length(files)){
+  tweet_txt <- gettxt(files[[i]])
+  txtList[[i]] <- tweet_txt
+}
+
+emotionList <- list()
+for(i in 1:length(txtList)){
+  emo <- sentimentAnaysis(txtList[[i]])
+  emotionList[[i]] <- emo
+}
+df <- nEmo(emotionList)
+cities <- namesCol(files)
+df <- cbind(df, cities)
+saveRDS(df, "EmotionResults.rds")
+```
 
 
 

@@ -20,12 +20,7 @@ install.packages("httr","streamR")
 install.packages("tm","Rstem")
 #Load Packages Using Pacman
 pacman::p_load(twitteR,plyr, ggplot2, RColorBrewer, httpuv, RCurl, base64enc,devtools,streamR,RJSONIO,stringr, ggmap, ROAuth)
-library(wordcloud)
-library(RColorBrewer)
-library(sentiment)
-#Sentiment Analysis
-install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
-install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+
 
 #Twitter Access 
 requestURL <- "https://api.twitter.com/oauth/request_token" 
@@ -47,10 +42,6 @@ save(my_oauth, file = "my_oauth.Rdata")
 ### START HERE!!!  ###
 load("/Users/jc/Desktop/my_oauth.Rdata")
  
-#Load Positive/Negative Words
-posWords = scan('/Users/jc/Projects/opinion-lexicon-English/positive-words.txt', what='character', comment.char=';')
-
-negWords = scan('/Users/jc/Projects/opinion-lexicon-English/negative-words.txt', what='character', comment.char=';')
 
 
 #Performs an OAuth handshake using the information provided.
@@ -78,9 +69,9 @@ dayIs(29)
 #CHANGE THIS <- getData(InterstName of File,X,This is the Topics to Search)
 dayIs <- function (x) { 
 
- getData("oreilly",x, oreilly)   
- getData("starbucks",x, starbucks)
-  getData("samsung", x, samsung)
+ #getData("oreilly",x, oreilly)   
+# getData("starbucks",x, starbucks)
+  #getData("samsung", x, samsung)
   getData("france", x, france)
 
 }
@@ -108,7 +99,6 @@ streamData <- function(x, y, w){
   
 }
 
-emotionRes <- readRDS("/Users/jc/Downloads/EmotionResults.rds")
 
 
 

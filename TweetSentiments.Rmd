@@ -1,0 +1,89 @@
+---
+title: "TweetSentiments"
+author: "Jean-Carlos Paredes"
+date: "5/2/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("streamR")
+library(RCurl)
+library(streamR)
+library(sentiment)
+library(ggplot2)
+#install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
+#install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+tweets.df <- parseTweets("/Users/jc/Desktop/TwitterR/franceKy23.json", simplify = FALSE) #Change This
+
+tweet_txt <-subset(tweets.df, select = "text")
+tweet_txt <-tweets.df$text
+
+gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
+
+gettxt <- function(file){
+  # parse the json file and save to a data frame called tweets.df. Simplify = FALSE ensures that we include      lat/lon information in that data frame.
+  file.df <- parseTweets(file, simplify = FALSE)
+  tweet_txt <-subset(file.df, select = "text")
+  tweet_txt <-file.df$text
+  # remove retweet entities
+  tweet_txt = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", tweet_txt)
+  # remove at people
+  tweet_txt = gsub("@\\w+", "", tweet_txt)
+  # remove punctuation
+  tweet_txt = gsub("[[:punct:]]", "", tweet_txt)
+  # remove numbers
+  tweet_txt = gsub("[[:digit:]]", "", tweet_txt)
+  # remove html links
+  tweet_txt = gsub("http\\w+", "", tweet_txt)
+  # remove unnecessary spaces
+  tweet_txt = gsub("[ \t]{2,}", "", tweet_txt)
+  tweet_txt = gsub("^\\s+|\\s+$", "", tweet_txt)
+  tweet_txt = gsub("[^0-9a-zA-Z ,./?><:;’~`!@#&*’]","", tweet_txt)
+
+# Perform Sentiment Analysis
+# classify emotion
+
+classify(tweet_txt)
+}
+
+classify <- function(x){
+class_emo = classify_emotion(x, algorithm='bayes', prior=1.0)
+
+# get emotion best fit
+emotion <- class_emo[,7]
+
+# substitute NA's by 'unknown'
+emotion[is.na(emotion)] = 'unknown'
+ 
+# classify polarity
+class_pol = classify_polarity(x, algorithm='bayes')
+# get polarity best fit
+polarity = class_pol[,4]
+
+# Create data frame with the results and obtain some general statistics
+# data frame with results
+sent_df = data.frame(text=x, emotion=emotion,
+polarity=polarity, stringsAsFactors=FALSE)
+# sort data frame
+sent_df = within(sent_df,
+emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
+
+
+# Let’s do some plots of the obtained results
+# plot distribution of emotions
+ggplot(sent_df, aes(x=emotion)) +
+geom_bar(aes(y=..count.., fill=emotion)) +
+scale_fill_brewer(palette='Dark2') +
+labs(x='emotion categories', y='number of tweets') +
+ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
+theme(plot.title = element_text(size=12, face='bold'))
+
+}
+
+```
+
+

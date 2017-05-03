@@ -7,15 +7,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ```{r}
-install.packages("streamR")
 install.packages("RCurl", "ROAuth")
 install.packages("RJSONIO")
-library(RCurl)
+
 library(RJSONIO)
 library(stringr)
 library(ggmap)
 library(plyr)
-library(sentiment)
 library(stringr)
 install.packages("pacman")
 pacman::p_load(devtools, installr)
@@ -27,8 +25,11 @@ pacman::p_load(twitteR, sentiment, plyr, ggplot2, wordcloud, RColorBrewer, httpu
 
 
 ```{r}
-
-
+install.packages("streamR")
+library(RCurl)
+library(streamR)
+library(sentiment)
+library(ggplot2)
 
 ```
 

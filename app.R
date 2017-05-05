@@ -8,12 +8,19 @@
 #
 
 library(shiny)
-
+library(ggplot2)
 library(maps)
 library(mapproj)
 source("/Users/jc/Downloads/helpers.R")
+source("/Users/jc/Downloads/SentimentHelpers.R")
+
+BillOreilly<- gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
 counties <- readRDS("/Users/jc/Downloads/counties.rds")
-emotionRes <- readRDS("/Users/jc/Downloads/OreillyResults.rds")
+#BillOreilly <- readRDS("/Users/jc/Desktop/TwitterR/em3t.rds")
+Samsung <- readRDS("/Users/jc/Desktop/TwitterR/emotion.rds")
+Elections <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
+Starbucks <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
+ 
 #percent_map(counties$white, "darkblue", "% White")
 
 # Define UI for application that draws a histogram
@@ -45,17 +52,20 @@ ui <- fluidPage(
    sidebarLayout(
      sidebarPanel(
        helpText("View sentiment over time"),
+       # Copy the line below to make a text input box
+       textInput("text", label = h3("Text input"), value = "Enter text"),
        
-       selectInput("var", 
+       hr(),# Copy the line below to make an action button
+       actionButton("action", label = "Action"),
+       
+       hr(),# You can access the value of the widget with input$action, e.g.
+    
+   
+       
+       selectInput("var2", 
                    label = "Choose a variable to display",
-                   choices = c("Samsung", "Starbucks",
-                               "Bill Oreilly", "France Elections"),
-                   selected = "Starbucks"),
-       sliderInput("bins",
-                   "Number of bins:",
-                   min = 1,
-                   max = 50,
-                   value = 30)
+                   choices = c("BillOreilly","Samsung","France Elections","Starbucks"),
+                   selected = "BillOreilly")
      ),
      mainPanel(
        plotOutput("distPlot")
@@ -98,84 +108,37 @@ server <- function(input, output) {
                 min = input$range[1])
   })
   
+  # You can access the value of the widget with input$text, e.g.
+  output$value <- renderPrint({ 
+    input$text 
+    })
+  # You can access the value of the widget with input$action, e.g.
+  output$value <- renderPrint({ 
+    input$action 
+    })
   
-  
+  datasetInput <- reactive({
+    switch(input$var2,
+           "BillOreilly" = BillOreilly,
+           "Samsung" = Samsung,
+           "France Elections" = Elections,
+           "Starbucks" = Starbucks)
+  })
   
    output$distPlot <- renderPlot({
-     gettxt <- function(file){
-       # parse the json file and save to a data frame called tweets.df. Simplify = FALSE ensures that we include      lat/lon information in that data frame.
-       file.df <- parseTweets(file, simplify = FALSE)
-       tweet_txt <-subset(file.df, select = "text")
-       tweet_txt <-file.df$text
-       # remove retweet entities
-       tweet_txt = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", tweet_txt)
-       # remove at people
-       tweet_txt = gsub("@\\w+", "", tweet_txt)
-       # remove punctuation
-       tweet_txt = gsub("[[:punct:]]", "", tweet_txt)
-       # remove numbers
-       tweet_txt = gsub("[[:digit:]]", "", tweet_txt)
-       # remove html links
-       tweet_txt = gsub("http\\w+", "", tweet_txt)
-       # remove unnecessary spaces
-       tweet_txt = gsub("[ \t]{2,}", "", tweet_txt)
-       tweet_txt = gsub("^\\s+|\\s+$", "", tweet_txt)
-       tweet_txt = gsub("[^0-9a-zA-Z ,./?><:;’~`!@#&*’]","", tweet_txt)
-       
-       # Perform Sentiment Analysis
-       # classify emotion
-       
-       classify(tweet_txt)
-     }
      
-     classify <- function(x){
-       class_emo = classify_emotion(x, algorithm='bayes', prior=1.0)
-       
-       # get emotion best fit
-       emotion <- class_emo[,7]
-       
-       # substitute NA's by 'unknown'
-       emotion[is.na(emotion)] = 'unknown'
-       
-       # classify polarity
-       class_pol = classify_polarity(x, algorithm='bayes')
-       # get polarity best fit
-       polarity = class_pol[,4]
-       
-       # Create data frame with the results and obtain some general statistics
-       # data frame with results
-       sent_df = data.frame(text=x, emotion=emotion,
-                            polarity=polarity, stringsAsFactors=FALSE)
-       # sort data frame
-       sent_df = within(sent_df,
-                        emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
-       
-       
-       # Let’s do some plots of the obtained results
-       # plot distribution of emotions
-       ggplot(sent_df, aes(x=emotion)) +
+     
+     dataset <- datasetInput()     
+     dataset
+       ggplot(dataset, aes(x=emotion)) +
          geom_bar(aes(y=..count.., fill=emotion)) +
          scale_fill_brewer(palette='Dark2') +
          labs(x='emotion categories', y='number of tweets') +
          ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
          theme(plot.title = element_text(size=12, face='bold'))
-       
-     }
-     
-     gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json") ##ADD JSON FILE HERE
-     
-      # generate bins based on input$bins from ui.R
-     # x    <- faithful[, 2] 
-     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-      
-      # draw the histogram with the specified number of bins
-     # hist(x, breaks = bins, col = 'darkgray', border = 'white')
+
    })
    
-   
-   #NEW SIDEBAR
-   
-    
 }
 
 

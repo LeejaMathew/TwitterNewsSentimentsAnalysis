@@ -17,12 +17,13 @@ library(sentiment)
 library(ggplot2)
 #install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
 #install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
-tweets.df <- parseTweets("/Users/jc/Desktop/TwitterR/franceKy23.json", simplify = FALSE) #Change This
 
 tweet_txt <-subset(tweets.df, select = "text")
 tweet_txt <-tweets.df$text
 
 gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
+gettxt("/Users/jc/Desktop/TwitterR/franceKy24.json")
+gettxt("/Users/jc/Desktop/TwitterR/starbucksNyc29.json")
 
 gettxt <- function(file){
   # parse the json file and save to a data frame called tweets.df. Simplify = FALSE ensures that we include      lat/lon information in that data frame.
@@ -72,6 +73,8 @@ polarity=polarity, stringsAsFactors=FALSE)
 sent_df = within(sent_df,
 emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
 
+
+saveRDS(sent_df, "/Users/jc/Desktop/TwitterR/em3t.rds")
 
 # Let’s do some plots of the obtained results
 # plot distribution of emotions

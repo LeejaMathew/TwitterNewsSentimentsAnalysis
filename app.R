@@ -13,10 +13,11 @@ library(maps)
 library(mapproj)
 source("/Users/jc/Downloads/helpers.R")
 source("/Users/jc/Downloads/SentimentHelpers.R")
+source("/Users/jc/Downloads/stream.R")
 
-BillOreilly<- gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
+#BillOreilly<- gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
 counties <- readRDS("/Users/jc/Downloads/counties.rds")
-#BillOreilly <- readRDS("/Users/jc/Desktop/TwitterR/em3t.rds")
+BillOreilly <- readRDS("/Users/jc/Desktop/TwitterR/em3t.rds")
 Samsung <- readRDS("/Users/jc/Desktop/TwitterR/emotion.rds")
 Elections <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
 Starbucks <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
@@ -52,16 +53,7 @@ ui <- fluidPage(
    sidebarLayout(
      sidebarPanel(
        helpText("View sentiment over time"),
-       # Copy the line below to make a text input box
-       textInput("text", label = h3("Text input"), value = "Enter text"),
-       
-       hr(),# Copy the line below to make an action button
-       actionButton("action", label = "Action"),
-       
-       hr(),# You can access the value of the widget with input$action, e.g.
-    
-   
-       
+      
        selectInput("var2", 
                    label = "Choose a variable to display",
                    choices = c("BillOreilly","Samsung","France Elections","Starbucks"),
@@ -70,13 +62,26 @@ ui <- fluidPage(
      mainPanel(
        plotOutput("distPlot")
      )
-   )
+   ),
    #NEW SIDEBAR
-      
-      # Show a plot of the generated distribution
+   sidebarLayout(
+     sidebarPanel(
+       helpText("Type Tweet"),
+       # Copy the line below to make a text input box
+       textInput("text22", label = h3("Text input"), value = "Enter text"),
+       
+       hr(),# Copy the line below to make an action button
+       actionButton("action2", label = "Action")
+       
+       # You can access the value of the widget with input$action, e.g.
+     ),
    
-     
+     mainPanel(
+       plotOutput("distPlot22")
+     )
    )
+)      # Show a plot of the generated distribution
+  
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -108,15 +113,9 @@ server <- function(input, output) {
                 min = input$range[1])
   })
   
-  # You can access the value of the widget with input$text, e.g.
-  output$value <- renderPrint({ 
-    input$text 
-    })
+
   # You can access the value of the widget with input$action, e.g.
-  output$value <- renderPrint({ 
-    input$action 
-    })
-  
+
   datasetInput <- reactive({
     switch(input$var2,
            "BillOreilly" = BillOreilly,
@@ -131,13 +130,28 @@ server <- function(input, output) {
      dataset <- datasetInput()     
      dataset
        ggplot(dataset, aes(x=emotion)) +
-         geom_bar(aes(y=..count.., fill=emotion)) +
+         geom_histogram(aes(y=..density.., fill=emotion)) +
          scale_fill_brewer(palette='Dark2') +
          labs(x='emotion categories', y='number of tweets') +
          ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
          theme(plot.title = element_text(size=12, face='bold'))
 
    })
+   
+   observeEvent(input$action2, {
+       BillOreilly2 <- start(input$text22)
+       output$distPlot22 <-  renderPlot({
+         ggplot(BillOreilly2, aes(x=emotion)) +
+           geom_bar(aes(y=..count.., fill=emotion)) +
+           scale_fill_brewer(palette='Dark2') +
+           labs(x='emotion categories', y='number of tweets') +
+           ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
+           theme(plot.title = element_text(size=12, face='bold'))
+       })
+     
+       })
+   
+   
    
 }
 

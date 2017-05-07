@@ -6,22 +6,20 @@
 #
 #    http://shiny.rstudio.com/
 #
-
 library(shiny)
 library(ggplot2)
 library(maps)
 library(mapproj)
+library("RgoogleMaps")
 source("/Users/jc/Downloads/helpers.R")
 source("/Users/jc/Downloads/SentimentHelpers.R")
 source("/Users/jc/Downloads/stream.R")
 source("/Users/jc/Projects/sourceFiles.R")
-
 #BillOreilly<- gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
-counties <- readRDS("/Users/jc/Downloads/counties.rds")
-BillOreilly <- readRDS("/Users/jc/Desktop/TwitterR/em3t.rds")
-Samsung <- readRDS("/Users/jc/Desktop/TwitterR/emotion.rds")
-Elections <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
-Starbucks <- readRDS("/Users/jc/Desktop/TwitterR/emot.rds")
+BillOreilly <- readRDS("/Users/jc/Projects/TWSentimentsDS/BillOreillyMapResults.rds")
+Samsung <- readRDS("/Users/jc/Projects/TWSentimentsDS/FrenchElectionMapResults.rds")
+Elections <- readRDS("/Users/jc/Projects/TWSentimentsDS/FrenchElectionMapResults.rds")
+Starbucks <- readRDS("/Users/jc/Projects/TWSentimentsDS/StarbucksMapResults.rds")
  
 #percent_map(counties$white, "darkblue", "% White")
 
@@ -35,18 +33,18 @@ ui <- fluidPage(
 
    sidebarLayout(
      sidebarPanel(
-       helpText("View sentiment over time"),
+       helpText("View Sentiment Map"),
        
        selectInput("var", 
-                   label = "Choose a variable to display",
+                   label = "Choose item to display",
                    choices = c("Samsung", "Starbucks",
                                 "Bill Oreilly", "France Elections"),
                    selected = "Bill Oreilly"),
-       
-       sliderInput("range", 
-                   label = "Range of interest:",
-                   min = 0, max = 100, value = c(0, 100))
-     ),
+       selectInput("senti", 
+              label = "Choose a sentiment to display",
+                choices = c("Anger", "Joy",
+                   "Sadness", "Fear","Surprise", "Disgust"),
+                   selected = "Anger")),
      
      mainPanel(plotOutput("map")
      )
@@ -57,7 +55,7 @@ ui <- fluidPage(
       
        selectInput("var2", 
                    label = "Choose a variable to display",
-                   choices = c( #"BillOreilly","Samsung","France Elections","Starbucks"
+                   choices = c( 
                      "OreillyKentuckyApril20", 
                      "OreillyKentuckyApril21",
                      "OreillyKentuckyApril22", 
@@ -144,32 +142,42 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   
-  output$map <- renderPlot({
+  
+  datasetInput2 <- reactive({ 
+  switch(input$var,
+          "Bill Oreilly" = BillOreilly,
+          "Samsung" = Samsung,
+          "France Elections" = Elections,
+          "Starbucks" = Starbucks
+  )
+  })
+  sentiInput <- reactive({ 
+    switch(input$senti,
+        "Anger" = "anger", 
+        "Joy" = "joy",
+        "Sadness" = "sadness", 
+        "Fear" = "fear",
+        "Surprise" = "surprise",
+        "Disgust" = "disgust"
+    )
+  })
+  
+    output$map <- renderPlot({
+      dataset2 <- datasetInput2()     
+          emotions <- sentiInput()
     
-    data <- switch(input$var, 
-                   "Samsung" = counties$white,
-                   "Starbucks" = counties$black,
-                   "Bill Oreilly" = counties$hispanic,
-                   "France Elections" = counties$asian)
+    MyMap <- GetMap(center = c(lat = 39, lon = -98), size = c(640, 640),
+                    zoom = 4, path = "", sensor = "true",
+                    maptype = c("terrain"),
+                    format = c("png32"),
+                    extraURL = "", RETURNIMAGE = TRUE, GRAYSCALE = FALSE, NEWMAP = TRUE,
+                    SCALE = 1, API_console_key = NULL, verbose = 0)
     
-    color <- switch(input$var, 
-                    "Samsung" = "darkgreen",
-                    "Starbucks" = "black",
-                    "Bill Oreilly" = "darkorange",
-                    "France Elections" = "darkviolet")
+    tmp <- PlotOnStaticMap(MyMap, lat = dataset2$lat,
+                           lon = dataset2$long, cex=((dataset2$emotions)/dataset2$total)*50,pch=20,
+                           col="red", add=FALSE)
     
-    legend <- switch(input$var, 
-                     "Samsung" = "% White",
-                     "Starbucks" = "% Black",
-                     "Bill Oreilly" = "% Hispanic",
-                     "France Elections" = "% Asian")
     
-    percent_map(var = data, 
-                color = color, 
-                legend.title = legend, 
-                max = input$range[2], 
-                min = input$range[1])
   })
   
 
@@ -177,10 +185,6 @@ server <- function(input, output) {
 
   datasetInput <- reactive({
     switch(input$var2,
-           # "BillOreilly" = BillOreilly,
-           # "Samsung" = Samsung,
-           # "France Elections" = Elections,
-           # "Starbucks" = Starbucks,
            "OreillyKentuckyApril20" = OreillyKentuckyApril20, 
            "OreillyKentuckyApril21" = OreillyKentuckyApril21,
            "OreillyKentuckyApril22" = OreillyKentuckyApril22, 
@@ -274,7 +278,6 @@ server <- function(input, output) {
    
    
 }
-
 
 # Run the application 
 shinyApp(ui = ui, server = server)

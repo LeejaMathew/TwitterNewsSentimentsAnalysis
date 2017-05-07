@@ -4,11 +4,11 @@ author: "Jennifer Cruz Hernandez"
 date: "May 7, 2017"
 output: html_document
 ---
-
 ```{r}
 #map
 install.packages("RgoogleMaps")
 library("RgoogleMaps")
+finaldf <- readRDS("/Users/jc/Projects/TWSentimentsDS/BillOreillyMapResults.rds")
 
 MyMap <- GetMap(center = c(lat = 39, lon = -98), size = c(640, 640),
         zoom = 4, path = "", sensor = "true",
@@ -19,7 +19,9 @@ MyMap <- GetMap(center = c(lat = 39, lon = -98), size = c(640, 640),
 
 tmp <- PlotOnStaticMap(MyMap, lat = finaldf$lat,
                         lon = finaldf$long,
-                        destfile = "MyTile1.png", cex=((finaldf$anger)/finaldf$total)*50,pch=20,
-                        col="red", add=FALSE);
+                        destfile = "MyTile1.png", cex=((finaldf$anger)/finaldf$total)*5,pch=20,
+                        col="red", add=FALSE)
+
+
 ```
 

@@ -10,20 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-install.packages("streamR")
 library(RCurl)
 library(streamR)
 library(sentiment)
 library(ggplot2)
-#install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
-#install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
 
-tweet_txt <-subset(tweets.df, select = "text")
-tweet_txt <-tweets.df$text
+# tweet_txt <-subset(tweets.df, select = "text")
+# tweet_txt <-tweets.df$text
 
-gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
-gettxt("/Users/jc/Desktop/TwitterR/franceKy24.json")
-gettxt("/Users/jc/Desktop/TwitterR/starbucksNyc29.json")
+# gettxt("/Users/jc/Desktop/TwitterR/franceKy23.json")
+# gettxt("/Users/jc/Desktop/TwitterR/franceKy24.json")
+# gettxt("/Users/jc/Desktop/TwitterR/starbucksNyc29.json")
 
 gettxt <- function(file){
   # parse the json file and save to a data frame called tweets.df. Simplify = FALSE ensures that we include      lat/lon information in that data frame.
@@ -53,38 +50,40 @@ classify(tweet_txt)
 
 classify <- function(x){
 class_emo = classify_emotion(x, algorithm='bayes', prior=1.0)
+  
+  # get emotion best fit
+  emotion <- class_emo[,7]
+  
+  # substitute NA's by 'unknown'
+  #emotion[is.na(emotion)] = 'unknown'
+  
+  # classify polarity
+  class_pol = classify_polarity(x, algorithm='bayes')
+  # get polarity best fit
+  polarity = class_pol[,4]
+  
+  # Create data frame with the results and obtain some general statistics
+  # data frame with results
+  sent_df = data.frame(text=x, emotion=emotion,
+                       polarity=polarity, stringsAsFactors=FALSE)
+  sent_df <-  sent_df[complete.cases(sent_df),]
+  # sort data frame
+  sent_df = within(sent_df,
+                   emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
+  
 
-# get emotion best fit
-emotion <- class_emo[,7]
-
-# substitute NA's by 'unknown'
-emotion[is.na(emotion)] = 'unknown'
- 
-# classify polarity
-class_pol = classify_polarity(x, algorithm='bayes')
-# get polarity best fit
-polarity = class_pol[,4]
-
-# Create data frame with the results and obtain some general statistics
-# data frame with results
-sent_df = data.frame(text=x, emotion=emotion,
-polarity=polarity, stringsAsFactors=FALSE)
-# sort data frame
-sent_df = within(sent_df,
-emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
-
-
-saveRDS(sent_df, "/Users/jc/Desktop/TwitterR/em3t.rds")
+#saveRDS(sent_df, "/Users/jc/Desktop/TwitterR/em3t.rds")
 
 # Let’s do some plots of the obtained results
 # plot distribution of emotions
-ggplot(sent_df, aes(x=emotion)) +
-geom_bar(aes(y=..count.., fill=emotion)) +
-scale_fill_brewer(palette='Dark2') +
-labs(x='emotion categories', y='number of tweets') +
-ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
-theme(plot.title = element_text(size=12, face='bold'))
+# ggplot(sent_df, aes(x=emotion)) +
+# geom_bar(aes(y=..count.., fill=emotion)) +
+# scale_fill_brewer(palette='Dark2') +
+# labs(x='emotion categories', y='number of tweets') +
+# ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
+# theme(plot.title = element_text(size=12, face='bold'))
 
+return(sent_df)
 }
 
 ```

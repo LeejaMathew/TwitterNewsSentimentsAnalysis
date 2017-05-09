@@ -1,0 +1,1 @@
+Presents the overall sentiments for a trend on a certain day. The data was classified using a classify_emotion function. Then the best fit for the resulting data was found. Next, NA’s were taken care of by being replaced by unknown. After, the data’s polarity was classified and best fit was found. Finally, the tweets were sorted and put into a data frame and plotted.

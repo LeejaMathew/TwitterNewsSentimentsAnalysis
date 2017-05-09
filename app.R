@@ -237,9 +237,9 @@ server <- function(input, output, session) {
              "disgustRatio" = Starbucks$disgustRatio)
     }
     #       emotions <-  append(dataset2,emotions)
-    MyMap <- GetMap(center = c(lat = 39, lon = -98), size = c(640, 640),
+    MyMap <- GetMap(center = c(lat = 39, lon = -97), size = c(620, 620),
                     zoom = 4, path = "", sensor = "true",
-                    maptype = c("terrain"),
+                    maptype = c("roadmap"),
                     format = c("png32"),
                     extraURL = "", RETURNIMAGE = TRUE, GRAYSCALE = FALSE, NEWMAP = TRUE,
                     SCALE = 1, API_console_key = NULL, verbose = 0)
@@ -327,9 +327,9 @@ server <- function(input, output, session) {
        ggplot(dataset, aes(x=emotion)) +
          geom_bar(aes(y=..count.., fill=emotion)) +
          scale_fill_brewer(palette='Dark2') +
-         labs(x='emotion categories', y='number of tweets') +
-         ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
-         theme(plot.title = element_text(size=12, face='bold'))
+         labs(x='Emotion Categories', y='Number Of Tweets') +
+         ggtitle('Sentiment Analysis of Tweets\n(Classification Starts From Highest Emotion)') +
+         theme(plot.title = element_text(size=15, face='bold'))
 
    })
    
@@ -339,9 +339,9 @@ server <- function(input, output, session) {
          ggplot(BillOreilly2, aes(x=emotion)) +
            geom_bar(aes(y=..count.., fill=emotion)) +
            scale_fill_brewer(palette='Dark2') +
-           labs(x='emotion categories', y='number of tweets') +
-           ggtitle('Sentiment Analysis of Tweets\n(classification by emotion)') +
-           theme(plot.title = element_text(size=12, face='bold'))
+           labs(x='Emotion Categories', y='Number Of Tweets') +
+           ggtitle('Sentiment Analysis of Tweets\n(Classification Starts From Highest Emotion)') +
+           theme(plot.title = element_text(size=15, face='bold'))
        })
      
        })
